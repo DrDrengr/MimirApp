@@ -51,6 +51,8 @@ class Widget(QWidget):
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.setImage(file_path)
             self.mimirCore.recognition(file_path)
+            #print(file_path)
+            #self.setImage(file_path)
             event.accept()
         else:
             event.ignore()
