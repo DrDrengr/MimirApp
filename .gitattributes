@@ -1,0 +1,2 @@
+\*.pt filter=lfs diff=lfs merge=lfs -text
+git lfs track "model/exp7/best.pt"
