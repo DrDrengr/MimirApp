@@ -1,40 +1,44 @@
 import torch
 from PIL import Image
-from pathlib import Path
 import cv2
 import numpy as np
+import os
+from dataAccess import DataAccess
 
 class MimirCore():
     def __init__(self):
         super().__init__()
-
-        self.best_path = 'C:\\Users\\Daniel\\Desktop\\Mimir\\MimirApp\\model\\custom\\v1\\exp7\\weights\\best.pt'
         self.yolo_path = 'ultralytics/yolov5'
+        self.rootPath = os.path.abspath(os.path.dirname(__file__))
+        self.best_path = os.path.join(self.rootPath , "model/exp7/best.pt")
 
+        self.imageSize = 640
         self.model = torch.hub.load(self.yolo_path, 'custom', path=self.best_path)
-        
+        self.dataAccess = DataAccess()
 
-    def recognition(self, file_path):
-        print(file_path)
+    def PhotoRecognition(self, imagePaths):
+        newImagePaths = []
+        for imagePath in imagePaths:
+            imageOpened = Image.open(imagePath) 
+            imagesOpened = [imageOpened]
 
-        image = Image.open(file_path) 
-        images = [image]
-        size = 640
+            results = self.model(imagesOpened, self.imageSize)
+            imageOpened.close()
 
-        results = self.model(images, size)
+            self.dataAccess.saveDetections(imagePath, results)
+            newImagePath = self.dataAccess.getDetectionsRenderedImagePath(imagePath)
+            newImagePaths.append(newImagePath)
+        return newImagePaths  
 
-        results.print()
-        results.show()
-        variable = results.pandas().xyxy[0]
-        print(variable)
 
     def VideoRecognition(self):
         cap = cv2.VideoCapture(0)
         while cap.isOpened():
             ret, frame = cap.read()
 
-            results = self.model(frame)
-            cv2.imshow('Yolo', np.squeeze(results.render()))
+            results = self.model(frame, self.imageSize)
+            cv2.imshow('Mimir - Live Object Detection Demo - press q to exit', np.squeeze(results.render()))
+
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
         cap.release()
